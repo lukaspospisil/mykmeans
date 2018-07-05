@@ -14,8 +14,7 @@ K=3;
 
 % problem parameters
 Ts = [2000:2000:20000]; % number of points
-n = 2; % dimension of the data
-
+N = 2; % dimension of the data
 
 time_gamma0 = zeros(length(Ts),1);
 time_C = zeros(length(Ts),1);
@@ -28,30 +27,36 @@ for Tidx = 1:length(Ts)
     disp(['T = ' num2str(T)])
     
     % generate problem
-    X = generate_clustering(T,n);
-    
+    X = generate_clustering(T,N);
+
+    % run K-means algorithm
+    % with one annealing step
+
     % generate random feasible gamma
     tic
-    gamma = rand(K,T);
+    
+    Gamma = zeros(K,T);
     for t=1:T
-        gamma(:,t) = gamma(:,t)/sum(gamma(:,t));
+        randidx = randi([1,K],1,1);
+        Gamma(randidx,t) = 1;
     end
+    
     time_gamma0(Tidx) = toc;
     
     it = 0;
     L = Inf;
-    C = zeros(n,K);
+    Theta = zeros(N,K);
     
     while it < 1000
         
-        % solve C-problem
+        % solve Theta-problem
         tic
         
         for k=1:K
-            sumgamma = sum(gamma(k,:));
+            sumgamma = sum(Gamma(k,:));
             if sumgamma ~= 0
-                for nn = 1:n
-                    C(nn,k) = dot(X(nn,:),gamma(k,:))/sumgamma;
+                for n = 1:N
+                    Theta(n,k) = dot(X(n,:),Gamma(k,:))/sumgamma;
                 end
             end
         end
@@ -64,12 +69,12 @@ for Tidx = 1:length(Ts)
         for t=1:T
             g = zeros(K,1);
             for k=1:K
-                g(k) = dot(X(:,t) - C(:,k),X(:,t) - C(:,k));
+                g(k) = dot(X(:,t) - Theta(:,k),X(:,t) - Theta(:,k));
             end
             
-            gamma(:,t) = zeros(K,1);
+            Gamma(:,t) = zeros(K,1);
             [~,minidx] = min(g);
-            gamma(minidx,t) = 1;
+            Gamma(minidx,t) = 1;
         end
         
         time_gamma(Tidx) = time_gamma(Tidx) + toc;
@@ -78,13 +83,16 @@ for Tidx = 1:length(Ts)
         tic
         
         L_old = L;
+        
+        
         L = 0;
         for k=1:K
             for t=1:T
-                L = L + gamma(k,t)*dot(X(:,t) - C(:,k),X(:,t) - C(:,k));
+                L = L + ...
+                  Gamma(k,t)*dot(X(:,t) - Theta(:,k),X(:,t) - Theta(:,k));
             end
         end
-        L = L/(T*n);
+        L = L/(T*N);
         
         time_L(Tidx) = time_L(Tidx) + toc;
         
@@ -102,8 +110,8 @@ for Tidx = 1:length(Ts)
     time_L(Tidx) = time_L(Tidx)/it;
 end
 
-gamma = [];
-X = [];
-C = [];
-save('results/kmeans1.mat')
+%gamma = [];
+%X = [];
+%C = [];
+%save('results/kmeans1.mat')
 
