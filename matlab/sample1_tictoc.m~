@@ -68,15 +68,14 @@ for Tidx = 1:length(Ts)
         % solve gamma problem
         timer_Gamma = tic;
         
-        for t=1:T
-            g = zeros(K,1);
-            for k=1:K
-                g(k) = dot(X(:,t) - Theta(:,k),X(:,t) - Theta(:,k));
-            end
-            
-            Gamma(:,t) = zeros(K,1);
-            [~,minidx] = min(g);
-            Gamma(minidx,t) = 1;
+        g = zeros(size(Gamma));
+        for k=1:K
+            g(k,:) = dot(X - C(:,k),X - C(:,k));
+        end
+        [~,idx] = min(g,[],1);
+        gamma = zeros(K,T);
+        for k=1:K
+            gamma(k,idx==k) = 1;
         end
         
         time_Gamma(Tidx) = time_Gamma(Tidx) + toc(timer_Gamma);
@@ -112,6 +111,8 @@ for Tidx = 1:length(Ts)
     time_L(Tidx) = time_L(Tidx)/it;
 end
 
-clear Gamma X Theta g
+Gamma = [];
+X = [];
+C = [];
 save('results/kmeans1.mat')
 
