@@ -30,16 +30,26 @@ for Tidx = 1:length(Ts)
     p = gcp('nocreate');
     
     % prepare local indexes
-    opt_nmb = floor(T/numOfWorkers);
-    rest_nmb = mod(T,numOfWorkers);
+    opt_nmb = floor(T/p.NumWorkers);
+    rest_nmb = mod(T,p.NumWorkers);
     local_Tidx = cell(1,p.NumWorkers);
-    local_Tidx{1} = 1;
     for proc_id=1:p.NumWorkers
-        local_Tidx{proc_id+1} = local_Tidx{proc_id} + opt_nmb;
-        if proc_id <= rest_nmb
-            local_Tidx{proc_id+1} = local_Tidx{proc_id+1} + 1;
+        if proc_id == 1
+            my_begin = 1;
+        else
+            my_begin = my_end+1;
         end
+        
+        my_end = my_begin + opt_nmb;
+        if proc_id < rest_nmb
+            my_end = my_end + 1;
+        end
+        
+        local_Tidx{proc_id} = my_begin:my_end;
+
     end
+    
+    keyboard
     
     
     % generate problem
@@ -64,7 +74,7 @@ for Tidx = 1:length(Ts)
     Theta = zeros(N,K);
     
     timer_all = tic;
-    while it < 1000local_Tidx{proc_id+1}
+    while it < 1000
         
         % solve Theta-problem
         timer_Theta = tic;
@@ -85,30 +95,32 @@ for Tidx = 1:length(Ts)
         Theta_d = cell(p.NumWorkers,1);
         Gamma_d = cell(1,p.NumWorkers);
         X_d = cell(1,p.NumWorkers);
-        for i=1:p.NumWorkers
-            Theta_d{i} = Theta;
-            Gamma_d{i} = Gamma(:,);
-            X_d{i} = Theta;
+        for proc_id=1:p.NumWorkers
+            Theta_d{proc_id} = Theta;
+            Gamma_d{proc_id} = Gamma(:,local_Tidx{proc_id});
+            X_d{proc_id} = X(:,local_Tidx{proc_id});
         end
-        
-        Gamma_d = cell(1,p.NumWorkers);
 
         timer_Gamma = tic;
         
         parfor proc_id=1:p.NumWorkers
-            
-            g = zeros(size(Gamma_loc));
+            g = zeros(size(Gamma_d{proc_id}));
             for k=1:K
-                g(k,:) = dot(X - Theta(:,k),X - Theta(:,k));
+                g(k,:) = dot(X_d{proc_id} - Theta_d{proc_id}(:,k),...
+                               X_d{proc_id} - Theta_d{proc_id}(:,k));
             end
             [~,idx] = min(g,[],1);
-            Gamma = zeros(K,T);
+            Gamma_d{proc_id} = zeros(K,length(local_Tidx{proc_id}));
             for k=1:K
-                Gamma(k,idx==k) = 1;
+                Gamma_d{proc_id}(k,idx==k) = 1;
             end
         end
         
         time_Gamma(Tidx) = time_Gamma(Tidx) + toc(timer_Gamma);
+
+        for proc_id=1:p.NumWorkers
+            Gamma(:,local_Tidx{proc_id}) = Gamma_d{proc_id};
+        end        
         
         % compute function value
         timer_L = tic;
@@ -142,5 +154,5 @@ for Tidx = 1:length(Ts)
 end
 
 clear Gamma X Theta g
-save('results/kmeans3a.mat')
+save('results/kmeans3b.mat')
 

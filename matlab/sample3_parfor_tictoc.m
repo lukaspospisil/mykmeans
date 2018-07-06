@@ -113,5 +113,5 @@ for Tidx = 1:length(Ts)
 end
 
 clear Gamma X Theta g
-save('results/kmeans3a.mat')
+save('results/kmeans3b.mat')
 

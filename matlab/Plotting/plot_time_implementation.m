@@ -1,14 +1,14 @@
 clear all
 
 plot1 = true;
-plot2 = false;
+plot2 = true;
 plot3a = true;
 plot3b = true;
 
 mylegend{1} = '1st implementation';
-%mylegend{2} = 'vectorization';
-mylegend{2} = 'parfor, 2 workers';
-mylegend{3} = 'parfor, 4 workers';
+mylegend{2} = 'vectorization';
+mylegend{3} = 'parfor, 2 workers';
+mylegend{4} = 'parfor, 4 workers';
 
 if plot1
     kmeans1 = load('results/kmeans1.mat');
@@ -27,7 +27,7 @@ if plot3b
 end
 
 
-setlog = false;
+setlog = true;
 
 figure
 hold on
@@ -42,7 +42,7 @@ if plot3a
     plot(kmeans3a.Ts,kmeans3a.time_Gamma,'gs-','Color',[0,0.6,0])
 end
 if plot3b
-    plot(kmeans3b.Ts,kmeans3b.time_Gamma,'ms-','Color',[1.0,0.3,0])
+    plot(kmeans3b.Ts,kmeans3b.time_Gamma,'ms-','Color',[0.5,0.3,1.0])
 end
 legend(mylegend)
 xlabel('$T$','Interpreter','latex')
@@ -66,7 +66,7 @@ if plot3a
     plot(kmeans3a.Ts,kmeans3a.time_Theta,'gs-','Color',[0,0.6,0])
 end
 if plot3b
-    plot(kmeans3b.Ts,kmeans3b.time_Theta,'ms-','Color',[1.0,0.3,0])
+    plot(kmeans3b.Ts,kmeans3b.time_Theta,'ms-','Color',[0.5,0.3,1.0])
 end
 legend(mylegend)
 xlabel('$T$','Interpreter','latex')
@@ -90,7 +90,7 @@ if plot3a
     plot(kmeans3a.Ts,kmeans3a.time_L,'gs-','Color',[0,0.6,0])
 end
 if plot3b
-    plot(kmeans3b.Ts,kmeans3b.time_L,'ms-','Color',[1.0,0.3,0])
+    plot(kmeans3b.Ts,kmeans3b.time_L,'ms-','Color',[0.5,0.3,1.0])
 end
 legend(mylegend)
 xlabel('$T$','Interpreter','latex')
@@ -114,7 +114,7 @@ if plot3a
     plot(kmeans3a.Ts,kmeans3a.time_all,'gs-','Color',[0,0.6,0])
 end
 if plot3b
-    plot(kmeans3b.Ts,kmeans3b.time_all,'ms-','Color',[1.0,0.3,0])
+    plot(kmeans3b.Ts,kmeans3b.time_all,'ms-','Color',[0.5,0.3,1.0])
 end
 
 legend(mylegend)

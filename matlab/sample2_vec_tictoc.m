@@ -13,8 +13,8 @@ rand('seed',13);
 K=3;
 
 % problem parameters
-%Ts = [2000:2000:20000,5e4,1e5,5e5,1e6,5e6,1e7]; % number of points
-Ts = [2000:2000:20000]; % number of points
+Ts = [2000:2000:20000,5e4,1e5,5e5,1e6,5e6,1e7]; % number of points
+%Ts = [2000:2000:20000]; % number of points
 N = 2; % dimension of the data
 
 time_Gamma0 = zeros(length(Ts),1);

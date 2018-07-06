@@ -12,7 +12,8 @@ rand('seed',13);
 K=3;
 
 % problem parameters
-Ts = [2000:2000:20000]; % number of points
+Ts = [2000:2000:20000,5e4,1e5,5e5,1e6,5e6,1e7]; % number of points
+%Ts = [2000:2000:20000]; % number of points
 N = 2; % dimension of the data
 
 time_Gamma0 = zeros(length(Ts),1);
@@ -30,17 +31,24 @@ for Tidx = 1:length(Ts)
     p = gcp('nocreate');
     
     % prepare local indexes
-    opt_nmb = floor(T/numOfWorkers);
-    rest_nmb = mod(T,numOfWorkers);
+    opt_nmb = floor(T/p.NumWorkers);
+    rest_nmb = mod(T,p.NumWorkers);
     local_Tidx = cell(1,p.NumWorkers);
-    local_Tidx{1} = 1;
     for proc_id=1:p.NumWorkers
-        local_Tidx{proc_id+1} = local_Tidx{proc_id} + opt_nmb;
-        if proc_id <= rest_nmb
-            local_Tidx{proc_id+1} = local_Tidx{proc_id+1} + 1;
+        if proc_id == 1
+            my_begin = 1;
+        else
+            my_begin = my_end+1;
         end
+        
+        my_end = my_begin + opt_nmb - 1;
+        if proc_id <= rest_nmb
+            my_end = my_end + 1;
+        end
+        
+        local_Tidx{proc_id} = my_begin:my_end;
+        
     end
-    
     
     % generate problem
     X = generate_clustering(T,N);
@@ -90,16 +98,18 @@ for Tidx = 1:length(Ts)
             Gamma_d{proc_id} = Gamma(:,local_Tidx{proc_id});
             X_d{proc_id} = X(:,local_Tidx{proc_id});
         end
-
+        
+        g_d = cell(p.NumWorkers,1);
+        
         timer_Gamma = tic;
         
         parfor proc_id=1:p.NumWorkers
-            g = zeros(size(Gamma_d{proc_id}));
+            g_d{proc_id} = zeros(size(Gamma_d{proc_id}));
             for k=1:K
-                g(k,:) = dot(X_d{proc_id} - Theta_d{proc_id}(:,k),...
-                               X_d{proc_id} - Theta_d{proc_id}(:,k));
+                g_d{proc_id}(k,:) = dot(X_d{proc_id} - Theta_d{proc_id}(:,k),...
+                    X_d{proc_id} - Theta_d{proc_id}(:,k));
             end
-            [~,idx] = min(g,[],1);
+            [~,idx] = min(g_d{proc_id},[],1);
             Gamma_d{proc_id} = zeros(K,length(local_Tidx{proc_id}));
             for k=1:K
                 Gamma_d{proc_id}(k,idx==k) = 1;
@@ -107,24 +117,20 @@ for Tidx = 1:length(Ts)
         end
         
         time_Gamma(Tidx) = time_Gamma(Tidx) + toc(timer_Gamma);
-
+        
         for proc_id=1:p.NumWorkers
             Gamma(:,local_Tidx{proc_id}) = Gamma_d{proc_id};
-        end        
+        end
         
         % compute function value
         timer_L = tic;
         
         L_old = L;
         
-        L = 0;
-        for t=1:T
-            for k=1:K
-                L = L + ...
-                    Gamma(k,t)*dot(X(:,t) - Theta(:,k),X(:,t) - Theta(:,k));
-            end
+        parfor proc_id=1:p.NumWorkers
+            L_d{proc_id} = sum(sum(bsxfun(@times,Gamma_d{proc_id},g_d{proc_id})));
         end
-        L = L/(T*N);
+        L = sum([L_d{:}])/(T*N);
         
         time_L(Tidx) = time_L(Tidx) + toc(timer_L);
         
@@ -144,5 +150,5 @@ for Tidx = 1:length(Ts)
 end
 
 clear Gamma X Theta g
-save('results/kmeans3b.mat')
+save('results/kmeans3a.mat')
 
