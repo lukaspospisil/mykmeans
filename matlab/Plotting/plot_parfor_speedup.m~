@@ -1,0 +1,11 @@
+times = [10.170089,5.172173,4.173914,3.167961,2.176639,2.166247,2.171352,2.174486];
+workers = 1:8;
+
+figure
+hold on
+title('pause(1) in parfor','interpreter','latex')
+plot(worke,kmeans1.time_Gamma,'bs-')
+legend(mylegend)
+xlabel('number of workers','Interpreter','latex')
+ylabel('speed up','Interpreter','latex')
+hold off

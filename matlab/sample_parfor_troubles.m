@@ -1,8 +1,10 @@
 clear all
 
+%poolobj = parpool(2);
+
 tic
-parfor t=1:10
-    pause(0.1)
+parfor t=1:100
+    pause(0.001)
 end
 toc
 

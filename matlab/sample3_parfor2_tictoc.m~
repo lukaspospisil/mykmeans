@@ -26,12 +26,28 @@ for Tidx = 1:length(Ts)
     
     disp(['T = ' num2str(T)])
     
+    % get parallel pool or start new one
+    p = gcp('nocreate');
+    
+    % prepare local indexes
+    opt_nmb = floor(T/numOfWorkers);
+    rest_nmb = mod(T,numOfWorkers);
+    local_Tidx = cell(1,p.NumWorkers);
+    local_Tidx{1} = 1;
+    for proc_id=1:p.NumWorkers
+        local_Tidx{proc_id+1} = local_Tidx{proc_id} + opt_nmb;
+        if proc_id <= rest_nmb
+            local_Tidx{proc_id+1} = local_Tidx{proc_id+1} + 1;
+        end
+    end
+    
+    
     % generate problem
     X = generate_clustering(T,N);
-
+    
     % run K-means algorithm
     % with one annealing step
-
+    
     % generate random feasible gamma
     timer_Gamma0 = tic;
     
@@ -46,9 +62,9 @@ for Tidx = 1:length(Ts)
     it = 0;
     L = Inf;
     Theta = zeros(N,K);
-
+    
     timer_all = tic;
-    while it < 1000
+    while it < 1000local_Tidx{proc_id+1}
         
         % solve Theta-problem
         timer_Theta = tic;
@@ -65,18 +81,31 @@ for Tidx = 1:length(Ts)
         time_Theta(Tidx) = time_Theta(Tidx) + toc(timer_Theta);
         
         % solve gamma problem
+        
+        Theta_d = cell(p.NumWorkers,1);
+        Gamma_d = cell(1,p.NumWorkers);
+        X_d = cell(1,p.NumWorkers);
+        for i=1:p.NumWorkers
+            Theta_d{i} = Theta;
+            Gamma_d{i} = Gamma(:,);
+            X_d{i} = Theta;
+        end
+        
+        Gamma_d = cell(1,p.NumWorkers);
+
         timer_Gamma = tic;
         
-        parfor t=1:T
-            g = zeros(K,1);
-            for k=1:K
-                g(k) = dot(X(:,t) - Theta(:,k),X(:,t) - Theta(:,k));
-            end
+        parfor proc_id=1:p.NumWorkers
             
-            v = zeros(K,1);
-            [~,minidx] = min(g);
-            v(minidx) = 1;
-            Gamma(:,t) = v;
+            g = zeros(size(Gamma_loc));
+            for k=1:K
+                g(k,:) = dot(X - Theta(:,k),X - Theta(:,k));
+            end
+            [~,idx] = min(g,[],1);
+            Gamma = zeros(K,T);
+            for k=1:K
+                Gamma(k,idx==k) = 1;
+            end
         end
         
         time_Gamma(Tidx) = time_Gamma(Tidx) + toc(timer_Gamma);
@@ -90,7 +119,7 @@ for Tidx = 1:length(Ts)
         for t=1:T
             for k=1:K
                 L = L + ...
-                  Gamma(k,t)*dot(X(:,t) - Theta(:,k),X(:,t) - Theta(:,k));
+                    Gamma(k,t)*dot(X(:,t) - Theta(:,k),X(:,t) - Theta(:,k));
             end
         end
         L = L/(T*N);
@@ -105,7 +134,7 @@ for Tidx = 1:length(Ts)
         
         it = it + 1;
     end
-
+    
     time_all(Tidx) = toc(timer_all)/it;
     time_Theta(Tidx) = time_Theta(Tidx)/it;
     time_Gamma(Tidx) = time_Gamma(Tidx)/it;

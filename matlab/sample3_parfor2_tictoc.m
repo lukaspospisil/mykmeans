@@ -1,4 +1,3 @@
-clc
 clear all
 path(pathdef);
 
@@ -27,12 +26,28 @@ for Tidx = 1:length(Ts)
     
     disp(['T = ' num2str(T)])
     
+    % get parallel pool or start new one
+    p = gcp('nocreate');
+    
+    % prepare local indexes
+    opt_nmb = floor(T/numOfWorkers);
+    rest_nmb = mod(T,numOfWorkers);
+    local_Tidx = cell(1,p.NumWorkers);
+    local_Tidx{1} = 1;
+    for proc_id=1:p.NumWorkers
+        local_Tidx{proc_id+1} = local_Tidx{proc_id} + opt_nmb;
+        if proc_id <= rest_nmb
+            local_Tidx{proc_id+1} = local_Tidx{proc_id+1} + 1;
+        end
+    end
+    
+    
     % generate problem
     X = generate_clustering(T,N);
-
+    
     % run K-means algorithm
     % with one annealing step
-
+    
     % generate random feasible gamma
     timer_Gamma0 = tic;
     
@@ -47,7 +62,7 @@ for Tidx = 1:length(Ts)
     it = 0;
     L = Inf;
     Theta = zeros(N,K);
-
+    
     timer_all = tic;
     while it < 1000
         
@@ -66,19 +81,33 @@ for Tidx = 1:length(Ts)
         time_Theta(Tidx) = time_Theta(Tidx) + toc(timer_Theta);
         
         % solve gamma problem
+        
+        Theta_d = cell(p.NumWorkers,1);
+        Gamma_d = cell(1,p.NumWorkers);
+        X_d = cell(1,p.NumWorkers);
+        for proc_id=1:p.NumWorkers
+            Theta_d{proc_id} = Theta;
+            Gamma_d{proc_id} = Gamma(:,local_Tidx{proc_id});
+            X_d{proc_id} = X(:,local_Tidx{proc_id});
+        end
+
         timer_Gamma = tic;
-        
-        g = zeros(size(Gamma));
-        for k=1:K
-            g(k,:) = dot(X - C(:,k),X - C(:,k));
+        parfor proc_id=1:p.NumWorkers
+            g = zeros(size(Gamma_d{proc_id}));
+            for k=1:K
+                g(k,:) = dot(X_d{proc_id} - Theta_d{proc_id}(:,k),X_d{proc_id} - Theta_d{proc_id}(:,k));
+            end
+            [~,idx] = min(g,[],1);
+            Gamma_d{proc_id} = zeros(K,length(local_Tidx{proc_id}));
+            for k=1:K
+                Gamma_d{proc_id}(k,idx==k) = 1;
+            end
         end
-        [~,idx] = min(g,[],1);
-        gamma = zeros(K,T);
-        for k=1:K
-            gamma(k,idx==k) = 1;
-        end
-        
         time_Gamma(Tidx) = time_Gamma(Tidx) + toc(timer_Gamma);
+
+        for proc_id=1:p.NumWorkers
+            Gamma(:,local_Tidx{proc_id}) = Gamma_d{proc_id};
+        end        
         
         % compute function value
         timer_L = tic;
@@ -86,10 +115,10 @@ for Tidx = 1:length(Ts)
         L_old = L;
         
         L = 0;
-        for k=1:K
-            for t=1:T
+        for t=1:T
+            for k=1:K
                 L = L + ...
-                  Gamma(k,t)*dot(X(:,t) - Theta(:,k),X(:,t) - Theta(:,k));
+                    Gamma(k,t)*dot(X(:,t) - Theta(:,k),X(:,t) - Theta(:,k));
             end
         end
         L = L/(T*N);
@@ -104,15 +133,13 @@ for Tidx = 1:length(Ts)
         
         it = it + 1;
     end
-
+    
     time_all(Tidx) = toc(timer_all)/it;
     time_Theta(Tidx) = time_Theta(Tidx)/it;
     time_Gamma(Tidx) = time_Gamma(Tidx)/it;
     time_L(Tidx) = time_L(Tidx)/it;
 end
 
-Gamma = [];
-X = [];
-C = [];
-save('results/kmeans1.mat')
+clear Gamma X Theta g
+save('results/kmeans3b.mat')
 

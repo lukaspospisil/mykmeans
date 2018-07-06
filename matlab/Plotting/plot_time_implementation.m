@@ -1,12 +1,14 @@
 clear all
 
 plot1 = true;
-plot2 = true;
-plot3 = true;
+plot2 = false;
+plot3a = true;
+plot3b = true;
 
 mylegend{1} = '1st implementation';
-mylegend{2} = 'vectorization';
-%mylegend{3} = 'spmd';
+%mylegend{2} = 'vectorization';
+mylegend{2} = 'parfor, 2 workers';
+mylegend{3} = 'parfor, 4 workers';
 
 if plot1
     kmeans1 = load('results/kmeans1.mat');
@@ -16,12 +18,16 @@ if plot2
     kmeans2 = load('results/kmeans2.mat');
 end
 
-if plot3
-    kmeans3 = load('results/kmeans3.mat');
+if plot3a
+    kmeans3a = load('results/kmeans3a.mat');
 end
- 
 
-setlog = true;
+if plot3b
+    kmeans3b = load('results/kmeans3b.mat');
+end
+
+
+setlog = false;
 
 figure
 hold on
@@ -32,8 +38,11 @@ end
 if plot2
     plot(kmeans2.Ts,kmeans2.time_Gamma,'rs-')
 end
-if plot3
-    plot(kmeans3.Ts,kmeans3.time_Gamma,'gs-','Color',[0,0.6,0])
+if plot3a
+    plot(kmeans3a.Ts,kmeans3a.time_Gamma,'gs-','Color',[0,0.6,0])
+end
+if plot3b
+    plot(kmeans3b.Ts,kmeans3b.time_Gamma,'ms-','Color',[1.0,0.3,0])
 end
 legend(mylegend)
 xlabel('$T$','Interpreter','latex')
@@ -53,8 +62,11 @@ end
 if plot2
     plot(kmeans2.Ts,kmeans2.time_Theta,'rs-')
 end
-if plot3
-    plot(kmeans3.Ts,kmeans3.time_Theta,'gs-','Color',[0,0.6,0])
+if plot3a
+    plot(kmeans3a.Ts,kmeans3a.time_Theta,'gs-','Color',[0,0.6,0])
+end
+if plot3b
+    plot(kmeans3b.Ts,kmeans3b.time_Theta,'ms-','Color',[1.0,0.3,0])
 end
 legend(mylegend)
 xlabel('$T$','Interpreter','latex')
@@ -74,8 +86,11 @@ end
 if plot2
     plot(kmeans2.Ts,kmeans2.time_L,'rs-')
 end
-if plot3
-    plot(kmeans3.Ts,kmeans3.time_L,'gs-','Color',[0,0.6,0])
+if plot3a
+    plot(kmeans3a.Ts,kmeans3a.time_L,'gs-','Color',[0,0.6,0])
+end
+if plot3b
+    plot(kmeans3b.Ts,kmeans3b.time_L,'ms-','Color',[1.0,0.3,0])
 end
 legend(mylegend)
 xlabel('$T$','Interpreter','latex')
@@ -95,9 +110,13 @@ end
 if plot2
     plot(kmeans2.Ts,kmeans2.time_all,'rs-')
 end
-if plot3
-    plot(kmeans3.Ts,kmeans3.time_all,'gs-','Color',[0,0.6,0])
+if plot3a
+    plot(kmeans3a.Ts,kmeans3a.time_all,'gs-','Color',[0,0.6,0])
 end
+if plot3b
+    plot(kmeans3b.Ts,kmeans3b.time_all,'ms-','Color',[1.0,0.3,0])
+end
+
 legend(mylegend)
 xlabel('$T$','Interpreter','latex')
 ylabel('time $[s]$','Interpreter','latex')
@@ -106,3 +125,6 @@ if setlog
     set(gca,'Yscale','log')
 end
 hold off
+
+
+
