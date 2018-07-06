@@ -4,7 +4,7 @@ clear all
 
 tic
 parfor t=1:100
-    pause(0.001)
+    pause(0.0001)
 end
 toc
 
