@@ -92,10 +92,12 @@ for Tidx = 1:length(Ts)
         end
 
         timer_Gamma = tic;
+        
         parfor proc_id=1:p.NumWorkers
             g = zeros(size(Gamma_d{proc_id}));
             for k=1:K
-                g(k,:) = dot(X_d{proc_id} - Theta_d{proc_id}(:,k),X_d{proc_id} - Theta_d{proc_id}(:,k));
+                g(k,:) = dot(X_d{proc_id} - Theta_d{proc_id}(:,k),...
+                               X_d{proc_id} - Theta_d{proc_id}(:,k));
             end
             [~,idx] = min(g,[],1);
             Gamma_d{proc_id} = zeros(K,length(local_Tidx{proc_id}));
@@ -103,6 +105,7 @@ for Tidx = 1:length(Ts)
                 Gamma_d{proc_id}(k,idx==k) = 1;
             end
         end
+        
         time_Gamma(Tidx) = time_Gamma(Tidx) + toc(timer_Gamma);
 
         for proc_id=1:p.NumWorkers
