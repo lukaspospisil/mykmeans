@@ -2,13 +2,18 @@ clear all
 
 plot1 = true;
 plot2 = true;
-plot3a = true;
-plot3b = true;
+plot3a = false;
+plot3b = false;
+plot4a = true;
+plot4b = true;
 
 mylegend{1} = '1st implementation';
 mylegend{2} = 'vectorization';
-mylegend{3} = 'parfor, 2 workers';
-mylegend{4} = 'parfor, 4 workers';
+%mylegend{3} = 'parfor, 2 workers';
+%mylegend{4} = 'parfor, 4 workers';
+mylegend{3} = 'spmd, 2 workers';
+mylegend{4} = 'spmd, 4 workers';
+
 
 if plot1
     kmeans1 = load('results/kmeans1.mat');
@@ -24,6 +29,14 @@ end
 
 if plot3b
     kmeans3b = load('results/kmeans3b.mat');
+end
+
+if plot4a
+    kmeans4a = load('results/kmeans4a.mat');
+end
+
+if plot4b
+    kmeans4b = load('results/kmeans4b.mat');
 end
 
 
@@ -43,6 +56,12 @@ if plot3a
 end
 if plot3b
     plot(kmeans3b.Ts,kmeans3b.time_Gamma,'ms-','Color',[0.5,0.3,1.0])
+end
+if plot4a
+    plot(kmeans4a.Ts,kmeans4a.time_Gamma,'gs-','Color',[1.0,0.6,0.5])
+end
+if plot4b
+    plot(kmeans4b.Ts,kmeans4b.time_Gamma,'ms-','Color',[0.5,0.6,0])
 end
 legend(mylegend)
 xlabel('$T$','Interpreter','latex')
@@ -68,6 +87,12 @@ end
 if plot3b
     plot(kmeans3b.Ts,kmeans3b.time_Theta,'ms-','Color',[0.5,0.3,1.0])
 end
+if plot4a
+    plot(kmeans4a.Ts,kmeans4a.time_Theta,'gs-','Color',[1.0,0.6,0.5])
+end
+if plot4b
+    plot(kmeans4b.Ts,kmeans4b.time_Theta,'ms-','Color',[0.5,0.6,0])
+end
 legend(mylegend)
 xlabel('$T$','Interpreter','latex')
 ylabel('time $[s]$','Interpreter','latex')
@@ -92,6 +117,13 @@ end
 if plot3b
     plot(kmeans3b.Ts,kmeans3b.time_L,'ms-','Color',[0.5,0.3,1.0])
 end
+if plot4a
+    plot(kmeans4a.Ts,kmeans4a.time_L,'gs-','Color',[1.0,0.6,0.5])
+end
+if plot4b
+    plot(kmeans4b.Ts,kmeans4b.time_L,'ms-','Color',[0.5,0.6,0])
+end
+
 legend(mylegend)
 xlabel('$T$','Interpreter','latex')
 ylabel('time $[s]$','Interpreter','latex')
@@ -115,6 +147,12 @@ if plot3a
 end
 if plot3b
     plot(kmeans3b.Ts,kmeans3b.time_all,'ms-','Color',[0.5,0.3,1.0])
+end
+if plot4a
+    plot(kmeans4a.Ts,kmeans4a.time_all,'gs-','Color',[1.0,0.6,0.5])
+end
+if plot4b
+    plot(kmeans4b.Ts,kmeans4b.time_all,'ms-','Color',[0.5,0.6,0])
 end
 
 legend(mylegend)
