@@ -2,7 +2,7 @@ clear all
 
 plot1 = true;
 plot2 = true;
-plot3 = false;
+plot3 = true;
 
 mylegend{1} = '1st implementation';
 mylegend{2} = 'vectorization';
